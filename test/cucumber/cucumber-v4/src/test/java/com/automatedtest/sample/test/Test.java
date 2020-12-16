@@ -29,7 +29,7 @@ public class Test {
 
     void checkTestName(String testName) {
         Assert.assertFalse(testNames.isEmpty());
-        Assert.assertTrue(testNames.stream().anyMatch(x->x.contains(testName)));
+        Assert.assertTrue(testNames.stream().anyMatch(x -> x.contains(testName)));
     }
 
 }

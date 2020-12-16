@@ -6,19 +6,19 @@ class MessageServiceSpec extends Specification {
 
     def 'Get message'() {
         URLConnection con = (URLConnection) new URL("http://postman-echo.com/headers").openConnection()
-        con.requestMethod = "GET"
-        def bytes = con.inputStream.readAllBytes()
+        def bytes = con.inputStream.bytes
+        String expectedContent = URLEncoder.encode("Get message", "UTF-8")
         expect: 'Should return the correct message'
         println 'Should return the correct message'
-        new String(bytes).contains("Get message")
+        new String(bytes).contains(expectedContent)
     }
 
     def "numbers to the power of two"(int a, int b, int c) {
         URLConnection con = (URLConnection) new URL("http://postman-echo.com/headers").openConnection()
-        con.requestMethod = "GET"
-        def bytes = con.inputStream.readAllBytes()
+        def bytes = con.inputStream.bytes
+        String expectedContent = URLEncoder.encode("numbers to the power of two", "UTF-8")
         expect:
-        new String(bytes).contains("numbers to the power of two")
+        new String(bytes).contains(expectedContent)
 
         where:
         a | b | c

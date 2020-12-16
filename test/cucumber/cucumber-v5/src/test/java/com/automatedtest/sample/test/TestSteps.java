@@ -3,6 +3,9 @@ package com.automatedtest.sample.test;
 import io.cucumber.java.*;
 import io.cucumber.java.en.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 public class TestSteps {
 
     private final Test test;
@@ -23,7 +26,7 @@ public class TestSteps {
     }
 
     @Before
-    public void saveScenarioName(Scenario scenario) {
-        actualTestName = scenario.getName();
+    public void saveScenarioName(Scenario scenario) throws UnsupportedEncodingException {
+        actualTestName = URLEncoder.encode(scenario.getName(), "UTF-8");
     }
 }
