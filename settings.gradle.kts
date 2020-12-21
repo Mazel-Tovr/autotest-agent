@@ -12,6 +12,8 @@ include(":test:rest-assure-ju5")
 include(":test:spock")
 include(":test:cucumber:cucumber-v4")
 include(":test:cucumber:cucumber-v5")
+
+include(":test:test-server")
 pluginManagement {
     repositories {
         mavenLocal()

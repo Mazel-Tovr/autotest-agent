@@ -29,6 +29,10 @@ subprojects {
         implementation(project(":runtime"))
     }
 
+    this.tasks.withType<Test> {
+        dependsOn(":test:test-server:startServer")
+        finalizedBy(":test:test-server:stopServer")
+    }
 
     if (this.name.endsWith("-ju5")) {
         println("Engine jupiter: ${this.name}")
@@ -43,6 +47,8 @@ subprojects {
         dependsOn(project(":").tasks.getByPath("linkAutoTestAgentDebugShared${presetName.capitalize()}"))
         dependsOn(project(":").tasks.getByPath("install${presetName.capitalize()}Dist"))
     }
+    project.extra["adminHost"] = "127.0.0.1"
+    project.extra["adminPort"] = 1234
 
     configure<com.epam.drill.agent.runner.AgentConfiguration> {
         additionalParams = mutableMapOf(
@@ -56,9 +62,10 @@ subprojects {
             .file("./build/install/$presetName")
             .resolve("${HostManager.host.family.dynamicPrefix}autoTestAgent.${HostManager.host.family.dynamicSuffix}")//todo
         agentId = "test-pet-standalone"
-        adminHost = "stub"
-        adminPort = -1
-        logLevel = TRACE
+        adminHost =  project.extra["adminHost"] as String
+        adminPort =  project.extra["adminPort"] as Int
+        logLevel = DEBUG
+
     }
 
 
