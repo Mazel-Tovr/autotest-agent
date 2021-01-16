@@ -2,17 +2,45 @@ package com.epam.drill.test.agent.instrumentation.testing.junit
 
 import com.epam.drill.test.agent.instrumentation.AbstractTestStrategy
 import com.epam.drill.test.agent.TestListener
+import com.epam.drill.test.agent.actions.*
 import javassist.*
+import javassist.expr.*
+import java.lang.reflect.*
 import java.security.ProtectionDomain
 
 @Suppress("unused")
 object JUnit5Strategy : AbstractTestStrategy() {
     override val id: String = "junit"
     override fun permit(ctClass: CtClass): Boolean {
-        return ctClass.name == "org.junit.platform.engine.support.hierarchical.NodeTestTaskContext"
+        return ctClass.name == "org.junit.platform.engine.support.hierarchical.NodeTestTaskContext" ||
+                ctClass.name == "org.junit.jupiter.engine.execution.ExecutableInvoker"
     }
 
     override fun instrument(
+        ctClass: CtClass,
+        pool: ClassPool,
+        classLoader: ClassLoader?,
+        protectionDomain: ProtectionDomain?
+    ): ByteArray? {
+        return when (ctClass.name) {
+            "org.junit.platform.engine.support.hierarchical.NodeTestTaskContext" -> nodeTestTaskContextInstrumentation(
+                ctClass,
+                pool,
+                classLoader,
+                protectionDomain
+            )
+            "org.junit.jupiter.engine.execution.ExecutableInvoker" -> executableInvokerInstrumentation(
+                ctClass,
+                pool,
+                classLoader,
+                protectionDomain
+            )
+            else -> ctClass.toBytecode()
+        }
+    }
+
+
+    private fun nodeTestTaskContextInstrumentation(
         ctClass: CtClass,
         pool: ClassPool,
         classLoader: ClassLoader?,
@@ -98,6 +126,38 @@ object JUnit5Strategy : AbstractTestStrategy() {
                     $1 = new MyList($1);
             """.trimIndent()
         )
+        return ctClass.toBytecode()
+    }
+
+    private fun executableInvokerInstrumentation(
+        ctClass: CtClass,
+        pool: ClassPool,
+        classLoader: ClassLoader?,
+        protectionDomain: ProtectionDomain?
+    ): ByteArray? {
+
+        val annotation = "${'$'}1.getAnnotation(org.junit.jupiter.api.BeforeAll.class) != null"
+//                "${'$'}1.getAnnotation(org.junit.jupiter.api.AfterAll.class) != null || " +
+//                "${'$'}1.getAnnotation(org.junit.jupiter.api.BeforeEach.class) != null ||" +
+//                "${'$'}1.getAnnotation(org.junit.jupiter.api.AfterEach.class) != null"
+
+        ctClass.declaredMethods[1].instrument(object : ExprEditor() {
+            override fun edit(m: MethodCall) {
+                m.replace(
+                    """
+                if($annotation) { 
+                    ${TestListener::class.java.name}.INSTANCE.${TestListener::testStarted.name}(${'$'}1.getName());
+                    ${'$'}_ = ${'$'}proceed(${'$'}${'$'});
+                     ${TestListener::class.java.name}.INSTANCE.${TestListener::testFinished.name}(${'$'}1.getName(),${TestResult.PASSED.name});
+                } else {
+                 ${'$'}_ = ${'$'}proceed(${'$'}${'$'});
+                }
+                
+                """.trimIndent()
+                )
+            }
+        })
+
         return ctClass.toBytecode()
     }
 }
